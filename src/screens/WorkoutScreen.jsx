@@ -17,6 +17,7 @@ export default function WorkoutScreen({ dayData, onBack, onComplete, logSet, get
 
   const timerRef = useRef(null)
   const exerciseTimerRef = useRef(null)
+  const [timedDone, setTimedDone] = useState(false) // signal when countdown hits 0
 
   const currentEx = dayData.exercises[exerciseIdx]
   const exData = getExercise(currentEx.ex_id)
@@ -33,21 +34,26 @@ export default function WorkoutScreen({ dayData, onBack, onComplete, logSet, get
     setSetIdx(0)
     setShowDesc(false)
     setJustLogged(false)
+    setTimedDone(false)
     setPhase('exercise')
     clearInterval(timerRef.current)
     clearInterval(exerciseTimerRef.current)
-
-    // Auto-start appropriate timer
     if (isTimed) {
       setCountdownVal(currentEx.reps)
-      setTimerRunning(true)
     } else {
       setTimerElapsed(0)
-      setTimerRunning(true)
     }
+    setTimerRunning(true)
   }, [exerciseIdx])
 
-  // Stopwatch (counts up) for strength and body weight
+  // Also reset countdown when set changes (after rest)
+  useEffect(() => {
+    if (!isTimed) return
+    setCountdownVal(currentEx.reps)
+    setTimedDone(false)
+  }, [setIdx])
+
+  // Stopwatch for strength/bodyweight
   useEffect(() => {
     if (isTimed || phase !== 'exercise') return
     clearInterval(exerciseTimerRef.current)
@@ -59,7 +65,7 @@ export default function WorkoutScreen({ dayData, onBack, onComplete, logSet, get
     return () => clearInterval(exerciseTimerRef.current)
   }, [timerRunning, isTimed, phase])
 
-  // Countdown timer for timed exercises
+  // Countdown for timed exercises — only sets timedDone flag when done
   useEffect(() => {
     if (!isTimed || phase !== 'exercise') return
     clearInterval(exerciseTimerRef.current)
@@ -68,8 +74,7 @@ export default function WorkoutScreen({ dayData, onBack, onComplete, logSet, get
         setCountdownVal(c => {
           if (c <= 1) {
             clearInterval(exerciseTimerRef.current)
-            // Auto-log when countdown hits 0
-            handleAutoLogTimed()
+            setTimedDone(true) // signal completion cleanly
             return 0
           }
           return c - 1
@@ -78,6 +83,21 @@ export default function WorkoutScreen({ dayData, onBack, onComplete, logSet, get
     }
     return () => clearInterval(exerciseTimerRef.current)
   }, [timerRunning, isTimed, phase])
+
+  // React to countdown completion — has access to fresh state via closure
+  useEffect(() => {
+    if (!timedDone) return
+    setTimedDone(false)
+    setTimerRunning(false)
+    logSet(dayData.id, currentEx.name, setIdx, 0, currentEx.reps)
+    setJustLogged(true)
+    setTimeout(() => {
+      setJustLogged(false)
+      if (isLastSet && isLastExercise) { onComplete(); return }
+      setRestRemaining(currentEx.rest)
+      setPhase('rest')
+    }, 600)
+  }, [timedDone])
 
   // Rest phase timer
   useEffect(() => {
@@ -91,20 +111,6 @@ export default function WorkoutScreen({ dayData, onBack, onComplete, logSet, get
     }, 1000)
     return () => clearInterval(timerRef.current)
   }, [phase])
-
-  function handleAutoLogTimed() {
-    setTimerRunning(false)
-    logSet(dayData.id, currentEx.name, setIdx, 0, currentEx.reps)
-    setJustLogged(true)
-    setTimeout(() => {
-      setJustLogged(false)
-      if (isLastSet && isLastExercise) { onComplete(); return }
-      setRestRemaining(currentEx.rest)
-      setPhase('rest')
-      // Reset countdown for next set
-      setCountdownVal(currentEx.reps)
-    }, 600)
-  }
 
   function advanceAfterRest() {
     setPhase('exercise')
