@@ -82,7 +82,7 @@ export default function WorkoutScreen({ dayData, onBack, onComplete, logSet, get
       if (isLastSet && isLastExercise) { onComplete(); return }
       setRestRemaining(currentEx.rest)
       setPhase('rest')
-    }, 600)
+    }, 1000)
   }, [countdownDone])
 
   // Rest timer — only signals restDone (fixes stale closure in advanceAfterRest)
@@ -102,11 +102,11 @@ export default function WorkoutScreen({ dayData, onBack, onComplete, logSet, get
     return () => clearInterval(timerRef.current)
   }, [phase])
 
-  // Handle rest completion — fresh state access via effect (fixes Bug 1)
+  // Handle rest completion — 1s pause then advance
   useEffect(() => {
     if (!restDone) return
     setRestDone(false)
-    advanceFromRest()
+    setTimeout(() => advanceFromRest(), 1000)
   }, [restDone])
 
   function advanceFromRest() {
@@ -135,7 +135,16 @@ export default function WorkoutScreen({ dayData, onBack, onComplete, logSet, get
       if (isLastSet && isLastExercise) { onComplete(); return }
       setRestRemaining(currentEx.rest)
       setPhase('rest')
-    }, 400)
+    }, 1000)
+  }
+
+  function handleNext() {
+    clearInterval(exerciseTimerRef.current)
+    setTimerRunning(false)
+    setCountdownDone(false)
+    if (isLastSet && isLastExercise) { onComplete(); return }
+    setRestRemaining(currentEx.rest)
+    setPhase('rest')
   }
 
   function skipRest() {
@@ -325,8 +334,8 @@ export default function WorkoutScreen({ dayData, onBack, onComplete, logSet, get
           ))}
         </div>
         <button
-          onClick={() => setExerciseIdx(i => Math.min(dayData.exercises.length - 1, i + 1))}
-          disabled={exerciseIdx === dayData.exercises.length - 1}
+          onClick={handleNext}
+          disabled={isLastSet && isLastExercise}
           className="flex items-center text-orange-400 font-black text-3xl disabled:opacity-30 active:text-orange-300 py-4 px-6 uppercase"
         >
           NEXT ›
