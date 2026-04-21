@@ -20,12 +20,14 @@ jobs:
         with:
           node-version: 20
       - run: npm install
+        working-directory: bowflex-training
       - run: npm run build
+        working-directory: bowflex-training
       - uses: actions/configure-pages@v4
         with:
           enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: bowflex-training/dist
       - uses: actions/deploy-pages@v4
         id: deployment
