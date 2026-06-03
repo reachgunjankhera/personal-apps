@@ -249,16 +249,19 @@ export default function WorkoutScreen({ dayData, onBack, onComplete, logSet, get
             </div>
           )}
 
-          {/* Timer — large, centered — tap to play/pause */}
-          <button
-            onClick={toggleTimer}
-            className="absolute inset-x-0 bottom-12 flex flex-col items-center gap-1"
-          >
+          {/* Timer — large, centered — with dedicated play/pause button */}
+          <div className="absolute inset-x-0 bottom-10 flex flex-col items-center gap-2">
             <span className="text-7xl font-black num-display drop-shadow-lg text-orange-400">
               {timerLabel}
             </span>
-            <span className="text-white/40 text-xs mt-1">{timerRunning ? '⏸ tap to pause' : '▶ tap to resume'}</span>
-          </button>
+            <button
+              onClick={toggleTimer}
+              aria-label={timerRunning ? 'Pause timer' : 'Resume timer'}
+              className="w-14 h-14 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center text-3xl text-white shadow-lg active:bg-white/30 active:scale-90 transition-all"
+            >
+              {timerRunning ? '⏸' : '▶'}
+            </button>
+          </div>
 
           {/* Set dots */}
           <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-2">

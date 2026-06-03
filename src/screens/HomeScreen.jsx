@@ -23,6 +23,15 @@ export default function HomeScreen({ onStartDay, isWorkoutComplete, onOpenCalend
           >
             📅
           </button>
+          <button
+            onClick={() => {
+              if (window.confirm('Reset ALL progress? This wipes every workout and cannot be undone.')) resetAll()
+            }}
+            className="text-3xl active:scale-90 transition-all p-2 text-gray-400 active:text-white"
+            aria-label="Reset all progress"
+          >
+            ↺
+          </button>
         </div>
         <div className="mt-5">
           <div className="flex justify-between text-sm text-gray-400 mb-2">
